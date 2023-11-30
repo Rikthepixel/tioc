@@ -5,7 +5,7 @@ export default defineConfig({
   clean: true,
   outDir: "./lib",
   target: "es2020",
-  entry: ["src/index.ts", 'src/submod/required.ts'],
+  entry: ["src/index.ts"],
   sourcemap: true,
   format: ["esm", "cjs"],
 });
