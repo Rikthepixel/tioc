@@ -1,188 +1,142 @@
-export type InjectionScopes = "singleton" | "scoped" | "transient";
+// Helpers
 
-export type InjectionResolver<
-  TResult extends object,
+// Unpacks object types to make them appear simpler in the IDE
+type Simplify<T extends object> = {
+  [TKey in keyof T]: T[TKey];
+} & {};
+
+// Unpacks functions to make them appear simpler in the IDE
+type SimplifyFn<T> = T extends (...args: infer A) => infer R
+  ? (...args: A) => R
+  : T;
+
+/**
+ * Factory that produces an object using the IoC container
+ */
+export type IoCFactory<
+  T = any,
   TContainer extends IoCContainer = IoCContainer,
-> = (c: TContainer) => TResult;
+> = (container: Simplify<TContainer>) => T;
 
-interface Injection<TResult extends object> {
-  resolver: InjectionResolver<TResult>;
-  instance: TResult | null;
-}
-interface TransientInjection<TResult extends object>
-  extends Omit<Injection<TResult>, "instance"> {}
+/**
+ * Available dependency scopes
+ * - "singleton" Only instantiated once per {@link IoCRegister}
+ * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
+ * - "transient" Instantiated every time it is requested
+ */
+export type DescriptorType = "singleton" | "scoped" | "transient";
 
-type RecordToScoped<TRecord extends Record<string, object>> = {
-  [TKey in keyof TRecord]: Injection<TRecord[TKey]>;
+type Descriptor<T, TContainer extends IoCContainer> = {
+  type: DescriptorType;
+  factory: (container: TContainer) => T;
 };
 
-type RecordToTransients<TRecord extends Record<string, object>> = {
-  [TKey in keyof TRecord]: TransientInjection<TRecord[TKey]>;
-};
-
-export interface SingletonRecords extends Record<string & {}, object> {}
-
-export default class IoCContainer<
-  TSingleton extends Record<string, object> = SingletonRecords,
-  TScoped extends Record<string, object> = {},
-  TTransient extends Record<string, object> = {},
-  TAllRegistered extends Record<string, object> = Omit<
-    TSingleton,
-    keyof TTransient | keyof TScoped
-  > &
-    Omit<TScoped, keyof TTransient> &
-    TTransient,
-> {
-  private static singletons: RecordToScoped<Record<string, object>> = {};
-
-  constructor(
-    private scoped: RecordToScoped<TScoped> = {} as RecordToScoped<TScoped>,
-    private transients: RecordToTransients<TTransient> = {} as RecordToTransients<TTransient>,
+/**
+ * Contains the registrations for the dependencies.
+ *
+ * @see {IoCRegister#create} to instantiate the register
+ * @see {IoCRegister#scope} to create a {@link IoCContainer}
+ *
+ */
+export class IoCRegister<T extends Record<string, any> = {}> {
+  private constructor(
+    private descriptors: Map<string, Descriptor<any, IoCContainer>>,
   ) {}
 
+  static create() {
+    return new IoCRegister(new Map());
+  }
+
+  private singletons = new Map<string, any>();
+
   /**
+   * Adds a dependency to the register with the chosen {@link DescriptionType}
    *
-   * Adds a singleton to the IoCContainer
-   *
-   * Singletons instances are tied to the lifetime of the application.
-   * These instances are added to a static map property on the IoCContainer class.
-   *
-   * If the key is already in the IoCContainer, the resolver will be overriden, but if there is an instance it will remain,
+   * Available dependency scopes
+   * - "singleton" Only instantiated once per {@link IoCRegister}
+   * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
+   * - "transient" Instantiated every time it is requested
    */
-  addSingleton<
-    TKey extends string,
-    TResult extends object,
-    TNextContainer = IoCContainer<
-      Omit<TSingleton, TKey> & { [key in TKey]: TResult },
-      TScoped,
-      TTransient
-    >,
-  >(key: TKey, resolver: InjectionResolver<TResult, this>): TNextContainer {
-    const singletonRecords = IoCContainer.singletons as RecordToScoped<{
-      [key in TKey]: TResult;
-    }>;
-
-    type TResolver = InjectionResolver<TResult, IoCContainer>;
-    if (key in singletonRecords) {
-      singletonRecords[key].resolver = resolver as TResolver;
-    } else {
-      singletonRecords[key] = {
-        resolver: resolver as TResolver,
-        instance: null,
-      };
-    }
-
-    return this as object as TNextContainer;
+  add<TKey extends string, TOutput>(
+    type: DescriptorType,
+    key: Exclude<TKey, keyof T>,
+    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
+  ): IoCRegister<Simplify<T & { [key in TKey]: TOutput }>> {
+    const descriptors = new Map(this.descriptors);
+    descriptors.set(key, { type: type, factory: factory as IoCFactory });
+    return new IoCRegister(descriptors);
   }
 
   /**
+   * Adds a singleton dependency to the register.
    *
-   * Adds a scoped instance to the IoCContainer
-   *
-   * Scoped instances are tied to the lifetime of the container.
-   * For example, if you wrap the IoCContainer within middleware, you could tie the lifetime to the lifetime of the request or request-context.
-   *
-   * If the key is already in the IoCContainer, the resolver will be overriden, but if there is an instance it will remain.
+   * Singletons are instantiated once per register.
    */
-  addScoped<
-    TKey extends string,
-    TResult extends object,
-    TNextContainer = IoCContainer<
-      TSingleton,
-      Omit<TScoped, TKey> & { [key in TKey]: TResult },
-      TTransient
-    >,
-  >(key: TKey, resolver: InjectionResolver<TResult, this>): TNextContainer {
-    (this.scoped as object as RecordToScoped<{ [key in TKey]: TResult }>)[key] =
-      {
-        resolver: resolver as InjectionResolver<TResult, IoCContainer>,
-        instance: null,
-      };
-    return this as object as TNextContainer;
+  addSingleton<TKey extends string, TOutput>(
+    key: Exclude<TKey, keyof T>,
+    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
+  ) {
+    return this.add("singleton", key, factory);
   }
 
   /**
+   * Adds a scoped dependency to the register.
    *
-   * Adds a transient to the IoCContainer
-   *
-   * Transients are created every time they are requested
+   * Scoped dependencies are instantiated once per IoCContainer.
+   * See {@link IoCRegister#scope} for how to create a new scope and IoCContainer.
    */
-  addTransient<
-    TKey extends string,
-    TResult extends object,
-    TNextContainer = IoCContainer<
-      TSingleton,
-      TScoped,
-      Omit<TTransient, TKey> & { [key in TKey]: TResult }
-    >,
-  >(key: TKey, resolver: InjectionResolver<TResult, this>): TNextContainer {
-    (
-      this.transients as object as RecordToTransients<{
-        [key in TKey]: TResult;
-      }>
-    )[key] = {
-      resolver: resolver as InjectionResolver<TResult, IoCContainer>,
-    };
-
-    return this as object as TNextContainer;
-  }
-
-  private resolveTransient<TKey extends keyof TTransient>(
-    key: TKey,
-  ): TTransient[TKey] {
-    const { resolver } = this.transients[key];
-    return resolver(this);
-  }
-
-  private resolveScoped<TKey extends keyof TScoped>(key: TKey): TScoped[TKey] {
-    const record = this.scoped[key];
-    if (!record.instance) {
-      record.instance = record.resolver(this);
-    }
-    return record.instance;
-  }
-
-  private resolveSingleton<TKey extends keyof TSingleton>(
-    key: TKey,
-  ): TSingleton[TKey] {
-    const record = (
-      IoCContainer.singletons as RecordToScoped<Record<TKey, TSingleton[TKey]>>
-    )[key];
-    if (!record.instance) {
-      record.instance = record.resolver(this);
-    }
-    return record.instance;
+  addScoped<TKey extends string, TOutput>(
+    key: Exclude<TKey, keyof T>,
+    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
+  ) {
+    return this.add("scoped", key, factory);
   }
 
   /**
-   * Resolves the dependency from the IoCContainer.
+   * Adds a transient dependency to the register.
+   *
+   * Transient dependencies are instantiated every time they are requested.
    */
-  public resolve<TKey extends keyof TAllRegistered>(
-    key: TKey,
-  ): TAllRegistered[TKey] {
-    switch (true) {
-      case key in this.transients:
-        return this.resolveTransient(
-          key as keyof TTransient,
-        ) as object as TAllRegistered[TKey];
-
-      case key in this.scoped:
-        return this.resolveScoped(
-          key as keyof TScoped,
-        ) as object as TAllRegistered[TKey];
-
-      default:
-      case key in IoCContainer.singletons:
-        return this.resolveSingleton(
-          key as keyof TSingleton,
-        ) as object as TAllRegistered[TKey];
-    }
+  addTransient<TKey extends string, TOutput>(
+    key: Exclude<TKey, keyof T>,
+    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
+  ) {
+    return this.add("transient", key, factory);
   }
 
-  public clone(): IoCContainer<TSingleton, TScoped, TTransient> {
-    return new IoCContainer<TSingleton, TScoped, TTransient>(
-      structuredClone(this.scoped),
-      structuredClone(this.transients),
-    );
+  /**
+   * Creates a new IoCContainer.
+   *
+   * Scoped dependencies are instantiated once per IoCContainer.
+   * IoCContainers are effectivelty scopes.
+   */
+  scope(): Simplify<IoCContainer<T>> {
+    const scoped = new Map<string, any>();
+
+    const entries = Array.from(this.descriptors).map(([key, descriptor]) => {
+      if (descriptor.type === "transient") {
+        return [key, () => descriptor.factory(container)] as const;
+      }
+
+      const storage = descriptor.type === "scoped" ? scoped : this.singletons;
+
+      return [
+        key,
+        () => {
+          if (storage.has(key)) return storage.get(key)!;
+          const created = descriptor.factory(container);
+          storage.set(key, created);
+          return created;
+        },
+      ] as const;
+    });
+
+    const container = Object.fromEntries(entries) as IoCContainer<T>;
+    return container;
   }
 }
+
+export type IoCContainer<T extends Record<string, any> = Record<string, any>> =
+  {
+    [TKey in keyof T]: () => T[TKey];
+  };
