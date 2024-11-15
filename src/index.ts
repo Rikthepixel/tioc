@@ -21,7 +21,7 @@ export type IoCFactory<
 /**
  * Available dependency scopes
  * - "singleton" Only instantiated once per {@link IoCRegister}
- * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
+ * - "scoped" Only instantiated once per scope see {@link IoCRegister#scope}
  * - "transient" Instantiated every time it is requested
  */
 export type DescriptorType = "singleton" | "scoped" | "transient";
@@ -54,7 +54,7 @@ export class IoCRegister<T extends Record<string, any> = {}> {
    *
    * Available dependency scopes
    * - "singleton" Only instantiated once per {@link IoCRegister}
-   * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
+   * - "scoped" Only instantiated once per scope see {@link IoCRegister#scope}
    * - "transient" Instantiated every time it is requested
    */
   add<TKey extends string, TOutput>(

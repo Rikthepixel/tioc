@@ -1,19 +1,25 @@
-# tioc
-A simple Inversion of Control container library for node
+# tioc - Type Inversion of Control
 
+A simple Inversion of Control container library for JS.
 
-// Helpers
+## Features
+- 3 different scopes:
+    - **Singleton** - Instantiated once
+    - **Scoped** - Instantiated once per container
+    - **Transient** - Instantiated every time when requested
+- Simple: only includes what's necessary
 
-// Unpacks object types to make them appear simpler in the IDE
-type Simplify<T extends object> = {
-  [TKey in keyof T]: T[TKey];
-} & {};
+## Usage
 
-// Unpacks functions to make them appear simpler in the IDE
-type SimplifyFn<T> = T extends (...args: infer A) => infer R
-  ? (...args: A) => R
-  : T;
+### Adding dependencies 
+```ts
 
+```
+
+### Retrieving dependencies
+```ts
+
+```
 /**
  * Factory that produces an object using the IoC container
  */
