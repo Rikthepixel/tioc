@@ -8,8 +8,6 @@
 
 A simple Inversion of Control library for JavaScript.
 
-## 
-
 ## Features
 - **3 different scopes**:
     - **Singleton** - Instantiated once per ServiceRegistry
