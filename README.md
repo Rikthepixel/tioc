@@ -1,4 +1,4 @@
-# tioc - Type Inversion of Control
+# TIOC - Type Inversion of Control
 [![License](https://img.shields.io/github/license/rikthepixel/tioc)](LICENSE)
 [![JSR](https://jsr.io/badges/@rikthepixel/tioc)](https://jsr.io/@rikthepixel/tioc)
 [![JSR Score](https://jsr.io/badges/@rikthepixel/tioc/score)](https://jsr.io/@rikthepixel/tioc)
@@ -6,7 +6,7 @@
 ![Minified size](https://img.shields.io/bundlephobia/min/tioc)
 ![Zipped minified size](https://img.shields.io/bundlephobia/minzip/tioc)
 
-A simple Inversion of Control container library for JS.
+A simple Inversion of Control library for JavaScript.
 
 ## 
 
