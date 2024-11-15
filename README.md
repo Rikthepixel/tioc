@@ -3,150 +3,113 @@
 A simple Inversion of Control container library for JS.
 
 ## Features
-- 3 different scopes:
-    - **Singleton** - Instantiated once
-    - **Scoped** - Instantiated once per container
+- **3 different scopes**:
+    - **Singleton** - Instantiated once per ServiceRegistry
+    - **Scoped** - Instantiated once per ServiceProvider
     - **Transient** - Instantiated every time when requested
-- Simple: only includes what's necessary
+- **Simple**, only includes what's necessary
+- **Tiny**, if you care about size, it's only around ~1kb (minified)
 
 ## Usage
 
-### Adding dependencies 
+### [Adding services](examples/adding-services.ts)
+
 ```ts
+import { ServiceRegistry } from "tioc";
 
-```
-
-### Retrieving dependencies
-```ts
-
-```
-/**
- * Factory that produces an object using the IoC container
- */
-export type IoCFactory<
-  T = any,
-  TContainer extends IoCContainer = IoCContainer,
-> = (container: Simplify<TContainer>) => T;
-
-/**
- * Available dependency scopes
- * - "singleton" Only instantiated once per {@link IoCRegister}
- * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
- * - "transient" Instantiated every time it is requested
- */
-export type DescriptorType = "singleton" | "scoped" | "transient";
-
-type Descriptor<T, TContainer extends IoCContainer> = {
-  type: DescriptorType;
-  factory: (container: TContainer) => T;
-};
-
-/**
- * Contains the registrations for the dependencies.
- *
- * @see {IoCRegister#create} to instantiate the register
- * @see {IoCRegister#scope} to create a {@link IoCContainer}
- *
- */
-export class IoCRegister<T extends Record<string, any> = {}> {
-  private constructor(
-    private descriptors: Map<string, Descriptor<any, IoCContainer>>,
-  ) {}
-
-  static create() {
-    return new IoCRegister(new Map());
-  }
-
-  private singletons = new Map<string, any>();
-
-  /**
-   * Adds a dependency to the register with the chosen {@link DescriptionType}
-   *
-   * Available dependency scopes
-   * - "singleton" Only instantiated once per {@link IoCRegister}
-   * - "scoped" Only instantiaetd once per scope see {@link IoCRegister#scope}
-   * - "transient" Instantiated every time it is requested
-   */
-  add<TKey extends string, TOutput>(
-    type: DescriptorType,
-    key: Exclude<TKey, keyof T>,
-    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
-  ): IoCRegister<Simplify<T & { [key in TKey]: TOutput }>> {
-    const descriptors = new Map(this.descriptors);
-    descriptors.set(key, { type: type, factory: factory as IoCFactory });
-    return new IoCRegister(descriptors);
-  }
-
-  /**
-   * Adds a singleton dependency to the register.
-   *
-   * Singletons are instantiated once per register.
-   */
-  addSingleton<TKey extends string, TOutput>(
-    key: Exclude<TKey, keyof T>,
-    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
-  ) {
-    return this.add("singleton", key, factory);
-  }
-
-  /**
-   * Adds a scoped dependency to the register.
-   *
-   * Scoped dependencies are instantiated once per IoCContainer.
-   * See {@link IoCRegister#scope} for how to create a new scope and IoCContainer.
-   */
-  addScoped<TKey extends string, TOutput>(
-    key: Exclude<TKey, keyof T>,
-    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
-  ) {
-    return this.add("scoped", key, factory);
-  }
-
-  /**
-   * Adds a transient dependency to the register.
-   *
-   * Transient dependencies are instantiated every time they are requested.
-   */
-  addTransient<TKey extends string, TOutput>(
-    key: Exclude<TKey, keyof T>,
-    factory: SimplifyFn<IoCFactory<TOutput, IoCContainer<T>>>,
-  ) {
-    return this.add("transient", key, factory);
-  }
-
-  /**
-   * Creates a new IoCContainer.
-   *
-   * Scoped dependencies are instantiated once per IoCContainer.
-   * IoCContainers are effectivelty scopes.
-   */
-  scope(): Simplify<IoCContainer<T>> {
-    const scoped = new Map<string, any>();
-
-    const entries = Array.from(this.descriptors).map(([key, descriptor]) => {
-      if (descriptor.type === "transient") {
-        return [key, () => descriptor.factory(container)] as const;
-      }
-
-      const storage = descriptor.type === "scoped" ? scoped : this.singletons;
-
-      return [
-        key,
-        () => {
-          if (storage.has(key)) return storage.get(key)!;
-          const created = descriptor.factory(container);
-          storage.set(key, created);
-          return created;
-        },
-      ] as const;
-    });
-
-    const container = Object.fromEntries(entries) as IoCContainer<T>;
-    return container;
-  }
+class Service {
+  // ...
 }
 
-export type IoCContainer<T extends Record<string, any> = Record<string, any>> =
-  {
-    [TKey in keyof T]: () => T[TKey];
-  };
+ServiceRegistry.create()
+  // Adding a simple service 
+  .add("singleton", "myService", () => new Service())
+
+  // Alternative way to write it!
+  .addSingleton("foo", () => new Service())
+  .addScoped("bar", () => new Service())
+  .addTransient("baz", () => new Service());
+```
+
+### [Requesting services](examples/requesting-services.ts)
+
+
+```ts
+import { ServiceRegistry } from "tioc";
+
+class Service {
+  // ....
+}
+
+// Register a new instance of Service to the key "foo"
+const registry = ServiceRegistry.create()
+  .addSingleton("foo", () => new Service());
+
+// Start a new scope. This will give you a ServiceProvider
+const provider = registry.scope();
+
+// Retreive the service by the key, "foo"
+const service = provider.foo();
+```
+
+### [Dependent services](examples/dependent-services.ts)
+
+`tioc` allows services to depend on another. 
+Factory functions are given a provider instance that they can use to get previously registered services.
+
+```ts
+import { ServiceRegistry } from "tioc";
+
+class Config {
+  // ...
+}
+
+class Database {
+  constructor(private config: Config) {}
+  // ...
+}
+
+// ✅ Register the service you want to depend on first, and then use it!
+ServiceRegistry.create()
+  .addSingleton("config", () => new Config())
+  .addSingleton("database", (provider) => new Database(provider.config())); // `provider` is a ServiceProvider, like the one received from `ServiceRegistry.scope()`
+
+// ❌ Doesn't work. Services can't depend on ones that arent registered yet. This prevents cyclic dependencies.
+ServiceRegistry.create()
+  .addSingleton("database", (provider) => new Database(provider.config())) // Error: Property 'config' does not exist on type '{}'.
+  .addSingleton("config", () => new Config());
+```
+
+### [Async services](examples/async-services.ts)
+
+It isn't recommended to make your services async, but sometimes there is no way around it.
+The `ServiceRegistry` and `ServiceProvider` are built to allow for async services.
+
+```ts
+import { ServiceRegistry } from "tioc";
+
+class Exchange {}
+class Queue {}
+
+declare class MessageQueue {
+  makeExchange(): Promise<Exchange>;
+  makeQueue(exchange: Exchange): Promise<Queue>;
+}
+
+const registry = ServiceRegistry.create()
+  .addSingleton("mq", () => new MessageQueue())
+  // Simply return a promise
+  .addSingleton("exchange", (provider) => provider.mq().makeExchange())
+  // Factory functions are allowed to be async.
+  .addSingleton("queue", async (provider) => {
+    const exchange = await provider.exchange()
+    return await provider.mq().makeQueue(exchange);
+  });
+
+const provider = registry.scope();
+
+// Async trickles down into the provider. 
+// If your factory returns a Promise, your provider will.
+const exchange = await provider.exchange();
+const queue = await provider.queue();
+```
