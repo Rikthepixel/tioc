@@ -34,15 +34,17 @@ type Descriptor<T, TContainer extends ServiceProvider> = {
 /**
  * Contains the registrations for the dependencies.
  *
- * @see {ServiceRegistry#create} to instantiate the register
- * @see {ServiceRegistry#scope} to create a {@link ServiceProvider}
- *
+ * {@link ServiceRegistry#create} to instantiate the register
+ * {@link ServiceRegistry#scope} to create a {@link ServiceProvider}
  */
 export class ServiceRegistry<T extends Record<string, any> = {}> {
   private constructor(
     private descriptors: Map<string, Descriptor<any, ServiceProvider>>,
   ) {}
 
+  /**
+   * Creates a new ServiceRegistry
+   */
   static create(): ServiceRegistry {
     return new ServiceRegistry(new Map());
   }
@@ -50,12 +52,16 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
   private singletons = new Map<string, any>();
 
   /**
-   * Adds a dependency to the register with the chosen {@link DescriptionType}
+   * Adds a dependency to the register with the chosen {@link DescriptionType}.
    *
    * Available dependency scopes
    * - "singleton" Only instantiated once per {@link ServiceRegistry}
    * - "scoped" Only instantiated once per scope see {@link ServiceRegistry#scope}
    * - "transient" Instantiated every time it is requested
+   *
+   * @param type The dependency scope
+   * @param key Key that the service can be retreived with.
+   * @param factory Produces a new instance of the service.
    */
   add<TKey extends string, TOutput>(
     type: DescriptorType,
@@ -71,6 +77,9 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
    * Adds a singleton dependency to the register.
    *
    * Singletons are instantiated once per {@link ServiceRegistry}.
+   *
+   * @param key Key that the service can be retreived with.
+   * @param factory Produces a new instance of the service.
    */
   addSingleton<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
@@ -84,6 +93,9 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
    *
    * Scoped dependencies are instantiated once per {@link ServiceProvider}.
    * See {@link ServiceRegistry#scope} for how to create a new scope and {@link ServiceProvider}.
+   *
+   * @param key Key that the service can be retreived with.
+   * @param factory Produces a new instance of the service.
    */
   addScoped<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
@@ -96,6 +108,9 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
    * Adds a transient dependency to the register.
    *
    * Transient dependencies are instantiated every time they are requested from the {@link ServiceProvider}.
+   *
+   * @param key Key that the service can be retreived with.
+   * @param factory Produces a new instance of the service.
    */
   addTransient<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
@@ -108,7 +123,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
    * Creates a new {@link ServiceProvider}.
    *
    * Scoped dependencies are instantiated once per {@link ServiceProvider}.
-   * {@link ServiceProviders} are effectivelty scopes.
+   * {@link ServiceProvider}s are effectivelty scopes.
    */
   scope(): Simplify<ServiceProvider<T>> {
     const scoped = new Map<string, any>();
