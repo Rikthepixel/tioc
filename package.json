@@ -1,6 +1,6 @@
 {
   "name": "tioc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "RikThePixel",
   "license": "Apache-2.0",
   "description": "A simple inversion of control container",
@@ -37,7 +37,10 @@
   "keywords": [
     "ioc",
     "di",
-    "typescript"
+    "typescript",
+    "inversion of control",
+    "dependency injection",
+    "service provider"
   ],
   "bugs": {
     "url": "https://github.com/Rikthepixel/tioc/issues"

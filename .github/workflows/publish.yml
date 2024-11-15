@@ -1,0 +1,33 @@
+name: Publish
+
+on:
+  release:
+    types:
+      - "released"
+    branches: [main]
+
+jobs:
+  publish-jsr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publishing to JSR
+        run: npx jsr publish
+
+  publish-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publishing to NPM
+        run: npm publish
+        env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}

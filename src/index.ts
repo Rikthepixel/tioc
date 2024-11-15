@@ -136,6 +136,9 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
   }
 }
 
+/**
+ * Provides services by the key that it was registered with.
+ */
 export type ServiceProvider<
   T extends Record<string, any> = Record<string, any>,
 > = {
