@@ -43,7 +43,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
     private descriptors: Map<string, Descriptor<any, ServiceProvider>>,
   ) {}
 
-  static create() {
+  static create(): ServiceRegistry {
     return new ServiceRegistry(new Map());
   }
 
@@ -75,7 +75,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
   addSingleton<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
     factory: SimplifyFn<ServiceFactory<TOutput, ServiceProvider<T>>>,
-  ) {
+  ): ServiceRegistry<Simplify<T & { [key in TKey]: TOutput }>> {
     return this.add("singleton", key, factory);
   }
 
@@ -88,7 +88,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
   addScoped<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
     factory: SimplifyFn<ServiceFactory<TOutput, ServiceProvider<T>>>,
-  ) {
+  ): ServiceRegistry<Simplify<T & { [key in TKey]: TOutput }>> {
     return this.add("scoped", key, factory);
   }
 
@@ -100,7 +100,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
   addTransient<TKey extends string, TOutput>(
     key: Exclude<TKey, keyof T>,
     factory: SimplifyFn<ServiceFactory<TOutput, ServiceProvider<T>>>,
-  ) {
+  ): ServiceRegistry<Simplify<T & { [key in TKey]: TOutput }>> {
     return this.add("transient", key, factory);
   }
 

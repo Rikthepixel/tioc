@@ -12,7 +12,10 @@
     /* Type Checking */
     "strict": true,
     /* Completeness */
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    /** JSR compatibility */
+    "noImplicitReturns": true,
+    "isolatedDeclarations": true
   },
   "include": ["src", "examples"],
   "exclude": ["node_modules", "lib"]
