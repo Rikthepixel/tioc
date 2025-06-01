@@ -15,8 +15,8 @@ type SimplifyFn<T> = T extends (...args: infer A) => infer R
  */
 export type ServiceFactory<
   T = any,
-  TContainer extends ServiceProvider = ServiceProvider,
-> = (container: Simplify<TContainer>) => T;
+  TProvider extends ServiceProvider = ServiceProvider,
+> = (provider: Simplify<TProvider>) => T;
 
 /**
  * Available dependency scopes
@@ -26,9 +26,9 @@ export type ServiceFactory<
  */
 export type DescriptorType = "singleton" | "scoped" | "transient";
 
-type Descriptor<T, TContainer extends ServiceProvider> = {
+type Descriptor<T, TProvider extends ServiceProvider> = {
   type: DescriptorType;
-  factory: (container: TContainer) => T;
+  factory: (provider: TProvider) => T;
 };
 
 /**
@@ -130,7 +130,7 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
 
     const entries = Array.from(this.descriptors).map(([key, descriptor]) => {
       if (descriptor.type === "transient") {
-        return [key, () => descriptor.factory(container)] as const;
+        return [key, () => descriptor.factory(provider)] as const;
       }
 
       const storage = descriptor.type === "scoped" ? scoped : this.singletons;
@@ -139,15 +139,15 @@ export class ServiceRegistry<T extends Record<string, any> = {}> {
         key,
         () => {
           if (storage.has(key)) return storage.get(key)!;
-          const created = descriptor.factory(container);
+          const created = descriptor.factory(provider);
           storage.set(key, created);
           return created;
         },
       ] as const;
     });
 
-    const container = Object.fromEntries(entries) as ServiceProvider<T>;
-    return container;
+    const provider = Object.fromEntries(entries) as ServiceProvider<T>;
+    return provider;
   }
 }
 
