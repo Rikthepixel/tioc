@@ -1,6 +1,6 @@
 {
     "name": "@rikthepixel/tioc",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "exports": "./src/index.ts",
     "publish": {
         "include": ["jsr.json", "LICENSE", "README.md", "src/**/*.ts"],
