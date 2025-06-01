@@ -28,7 +28,7 @@ class Service {
 }
 
 ServiceRegistry.create()
-  // Adding a simple service 
+  // Adding a simple service
   .add("singleton", "myService", () => new Service())
 
   // Alternative way to write it!
@@ -60,7 +60,7 @@ const service = provider.foo();
 
 ### [Dependent services](examples/dependent-services.ts)
 
-`tioc` allows services to depend on another. 
+`tioc` allows services to depend on another.
 Factory functions are given a provider instance that they can use to get previously registered services.
 
 ```ts
@@ -114,7 +114,7 @@ const registry = ServiceRegistry.create()
 
 const provider = registry.scope();
 
-// Async trickles down into the provider. 
+// Async trickles down into the provider.
 // If your factory returns a Promise, your provider will.
 const exchange = await provider.exchange();
 const queue = await provider.queue();

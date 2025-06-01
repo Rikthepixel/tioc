@@ -1,53 +1,53 @@
 {
-  "name": "tioc",
-  "version": "1.0.2",
-  "author": "RikThePixel",
-  "license": "Apache-2.0",
-  "description": "A simple inversion of control provider",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
-  "scripts": {
-    "build": "tsup"
-  },
-  "engines": {
-    "node": ">=17"
-  },
-  "devDependencies": {
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.2"
-  },
-  "files": [
-    "lib",
-    "LICENSE",
-    "package.json",
-    "README.md"
-  ],
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./lib//index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "ioc",
-    "di",
-    "typescript",
-    "inversion of control",
-    "dependency injection",
-    "service provider"
-  ],
-  "bugs": {
-    "url": "https://github.com/Rikthepixel/tioc/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Rikthepixel/tioc.git"
-  },
-  "homepage": "https://github.com/Rikthepixel/tioc#readme"
+    "name": "tioc",
+    "version": "1.0.2",
+    "author": "RikThePixel",
+    "license": "Apache-2.0",
+    "description": "A simple inversion of control provider",
+    "main": "./lib/index.js",
+    "module": "./lib/index.mjs",
+    "types": "./lib/index.d.ts",
+    "scripts": {
+        "build": "tsup"
+    },
+    "engines": {
+        "node": ">=17"
+    },
+    "devDependencies": {
+        "tsup": "^8.0.1",
+        "typescript": "^5.3.2"
+    },
+    "files": [
+        "lib",
+        "LICENSE",
+        "package.json",
+        "README.md"
+    ],
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./lib//index.d.ts",
+            "import": "./lib/index.mjs",
+            "require": "./lib/index.js"
+        }
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "keywords": [
+        "ioc",
+        "di",
+        "typescript",
+        "inversion of control",
+        "dependency injection",
+        "service provider"
+    ],
+    "bugs": {
+        "url": "https://github.com/Rikthepixel/tioc/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Rikthepixel/tioc.git"
+    },
+    "homepage": "https://github.com/Rikthepixel/tioc#readme"
 }
