@@ -1,6 +1,6 @@
 {
     "name": "tioc",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "RikThePixel",
     "license": "Apache-2.0",
     "description": "A simple inversion of control provider",

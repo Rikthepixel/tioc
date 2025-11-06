@@ -162,3 +162,5 @@ export type ServiceProvider<
 > = {
     [TKey in keyof T]: () => T[TKey];
 };
+
+export type GetServiceProvider<T extends ServiceRegistry<any>> = T extends ServiceRegistry<infer TRegistered> ? Simplify<ServiceProvider<TRegistered>> : never;
